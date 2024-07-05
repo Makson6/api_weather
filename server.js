@@ -87,7 +87,7 @@ app.get('/api/hello', async (req, res) => {
 });
 
 app.get('/', (req, res)=> {
-  res.send('Hello, the endpoint api/hello please enter a parameter, eg: visitor_name="Makson6". This api will send you your location and the temperature');
+  res.send(`Hello, the endpoint is to add this to the url- /api/hello?visitor_name="YourName". This api will send you your location and the temperature`);
 })
 
 app.listen(port, () => {
