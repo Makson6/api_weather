@@ -1,9 +1,11 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import axios from 'axios';
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json())
 const port = process.env.PORT;
 
@@ -38,7 +40,8 @@ app.get('/api/hello', async function (req, res) {
 
 app.use('*', function (req, res) {
   res.status(404).json({
-    message: "add this to your url - api/hello?visitor_name=David"
+    message: 'https://api-weather-psi.vercel.app/api/hello?visitor_name=David',
+
   })
 });
 
