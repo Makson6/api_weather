@@ -1,95 +1,46 @@
+import dotenv from 'dotenv';
 import express from 'express';
-import { configDotenv } from 'dotenv';
-
-configDotenv();
-
-import ip from 'ip'; // To get client IP address
+import axios from 'axios';
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+app.use(express.json())
+const port = process.env.PORT;
 
-async function getLocationFromIP(ipAddress) {
-  // URL de l'API pour obtenir les informations de localisation
-  const apiUrl = `https://ipapi.co/${ipAddress}/json/`;
 
-  return fetch(apiUrl)
-    .then(response => response.json())
-    .then(data => {
-      // Récupérer les informations de localisation
-      const city = data.city;
+app.get('/api/hello', async function (req, res) {
 
-      // Retourner un objet avec les informations
-      return {
-        city: city
-      };
-    })
-    .catch(error => {
-      console.error("Erreur lors de la récupération des informations de localisation :", error);
-      return null;
+  try {
+    const visitorName = req.query.visitor_name;
+    const APIKEY = process.env.APIKEY
+    const clientIP =
+      req.headers["cf-connecting-ip"] ||
+      req.headers["x-real-ip"] ||
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress ||
+      "";
+    const resp = await axios.get(`http://ip-api.com/json/${clientIP}`);
+
+    const { city } = resp.data || 'Goma';
+    const weatherResp = await axios.get(
+      `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKEY}`
+    );
+    const temp = weatherResp.data.main.temp;
+    res.status(200).json({
+      client_id: clientIP,
+      location: city,
+      greeting: `Hello, ${visitorName}!, the temperature is ${temp} degrees Celsuis in ${city}`
     });
-}
-
-// import fetch from 'node-fetch';
-
-// Votre clé API OpenWeather
-const API_KEY = process.env.APIKEY;
-
-async function getTemperatureByCity(cityName) {
-  try {
-    // URL de l'API OpenWeather pour récupérer les données météorologiques d'une ville
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric`;
-
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (response.ok) {
-      const temperature = data.main.temp;
-      return temperature;
-    } else {
-      throw new Error(`Error ${response.status}: ${data.message}`);
-    }
   } catch (error) {
-    console.error('Error getting temperature:', error);
-    throw error;
+    res.status(500).json({ error: error.message });
   }
-}
-
-
-
-app.get('/api/hello', async (req, res) => {
-  const visitorName = req.query.visitor_name || 'Makson6'; // Get visitor name from query parameter
-  // const clientIP = ip.address(); // Get client IP address
-
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  const clientIP = ip.replace(/^::ffff:/, "");
-
-  const clientCity = await getLocationFromIP(clientIP);
-
-  try {
-    
-
-      const location = clientCity.city || 'New York';
-  
-      const temperature = await getTemperatureByCity(location) || 11 ; 
-  
-      const response = {
-        client_ip: clientIP,
-        location: location,
-        greeting: `Hello, ${visitorName}!, the temperature is ${temperature} degrees Celcius in ${location}`,
-      };
-      res.status(200).json(response); // Send JSON response
-    
-  } catch (error) {
-    res.status(500).json({message : 'Error getting temperature or client IP'}); // Send JSON response
-
-  }
-
-});
-
-app.get('/', (req, res)=> {
-  res.send(`Hello, the endpoint is to add this to the url- /api/hello?visitor_name="YourName". This api will send you your location and the temperature`);
 })
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.use('*', function (req, res) {
+  res.status(404).json({
+    message: "add this to your url - api/hello?visitor_name=David"
+  })
 });
+
+
+app.listen(port);
