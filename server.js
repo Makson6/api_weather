@@ -39,7 +39,7 @@ app.get('/api/hello', async function (req, res) {
 })
 
 app.use('*', function (req, res) {
-  res.status(404).json({
+  res.status(200).json({
     message: 'https://api-weather-psi.vercel.app/api/hello?visitor_name=David',
 
   })
